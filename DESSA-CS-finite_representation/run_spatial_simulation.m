@@ -1,5 +1,14 @@
 %clear all
 
+% Run The Golang code to perform numerical integrations of the reaction
+% propensities (and the other necessary files loaded below)
+% and save them to files before running this simulation.
+% Ensure that the fixed parameters used in Golang to
+% generate Integrated_prepensities match those defined above.
+% Integrated_propensities = csvread('integratedPropensities_FINITE.csv');
+% distances = csvread('distance_list_FINITE.csv');
+% times_list = csvread('times_list_FINITE.csv');
+
 numReactants = 1000; %%[100,200,400,800,1000,1600,3200,6400,12000];
 
 trials = length(numReactants);%4;
@@ -74,7 +83,7 @@ assemblies_lastUpdate_absTime = zeros(1,length(currentAssemblyIDs));
 % that samples a waiting time. 
 minPropensityDuration = 1e-7; % units [s] 
 
-earliestPropensityTime = 1e-8; % when does propensity integration begin following the most recent reaction
+earliestPropensityTime = 1e-6; % when does propensity integration begin following the most recent reaction
 
 % -------------------------------------------------------------------------
 % Michaelis Menten benchmark parameters BEGIN
@@ -141,12 +150,8 @@ maxRxDist_T_HARD = n_sigma*sqrt(6*Dmonomer*T_HARDLIMIT_DIFFUSE); % units [um]
 % maxRxDistance.
 maxRxDistance = maxRxDist_T_HARD; 
 
-% Run Integrated_prePropensities.m before running this simulation.
-% Ensure that the fixed parameters used in Integrated_prePropensities.m to
-% generate Integrated_prepensities match those defined above.
-% load(['SAVED_Integrated_propensities_',date,'.mat'],'Integrated_propensities','rate_constant',...
-%     'contact_sphere_radiusSqd','distances','times_list','Da','Db','runtime')
-%load('SAVED_Integrated_propensities_01-Mar-2020.mat')
+
+
 tic;
 % % ---------- INITIALIZATION ---------------------------------------------
 % Helper Function replaces (/contains) FOR loop.
