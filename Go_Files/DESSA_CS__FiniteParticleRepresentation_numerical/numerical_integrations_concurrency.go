@@ -152,8 +152,8 @@ func main() {
   success := writeCSV(Integrated_Propensities, fileName)
   fmt.Println(success)
 
-  fileName := "integratedPDFs_FINITE.csv"
-  success := writeCSV(Integrated_PDFs, fileName)
+  fileName = "integratedPDFs_FINITE.csv"
+  success = writeCSV(Integrated_PDFs, fileName)
   fmt.Println(success)
 
   fileName = "PDFs_FINITE.csv"
