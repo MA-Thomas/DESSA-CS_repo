@@ -28,15 +28,21 @@ if IntegratedPropensity_curve(end) - IntegratedPropensity_at_t_offset < Pk
 end
 
 inds = find(IntegratedPropensity_curve >= Pk + IntegratedPropensity_at_t_offset);
+% inds = IntegratedPropensity_curve >= Pk + IntegratedPropensity_at_t_offset;
 
 
 
 %if ~isempty(inds)
     
     wait_time = times_list(inds(1));
-    integPropValue = IntegratedPropensity_curve( inds(1) );    
-
+    integPropValue = IntegratedPropensity_curve( inds(1) );
     assert(wait_time>0)
+%     wait_time = times_list(inds);
+%     integPropValue = IntegratedPropensity_curve( inds );    
+% 
+%     assert(wait_time(1)>0)
+%     wait_time = wait_time(1);
+%     integPropValue = integPropValue(1);
 % else
 %     % No reaction in allowed max diffusion time
 %     wait_time = -1;

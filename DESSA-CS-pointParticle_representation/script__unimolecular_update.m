@@ -311,14 +311,7 @@ for row_number = 1:numProducts
         n_sigma*sqrt(6.*D_partners.*maxAllowed_t_elapsed_list) ...
         >= distList__currRow & maxAllowed_t_wait_list > minPropensityDuration;
     
-    % SET HARD GLOBAL UPPER LIMIT ON TIME CURRENT ASSEMBLY CAN DIFFUSE.
-    % THIS HARD LIMIT IS INDEPENDENT OF NEAREST BOUNDARIES AND INDEPENDENT
-    % OF THE DEFINITION OF NEARBY.
-    % THIS HARD GLOBAL UPPER LIMIT IS ALSO APPLIED TO POS-ONLY-UPDATES.
-    % THIS HARD GLOBAL UPPER LIMIT ALSO APPLIES TO PROPENSITY INTEGRATION
-    % IN computeWaitTime_____v2_alt.m
-    valid_pair_indices_HARDLIMIT = maxAllowed_t_wait_list <= T_HARDLIMIT_DIFFUSE;
-    valid_pair_indices = valid_pair_indices & valid_pair_indices_HARDLIMIT;
+
     
     % This will be an input to computeWaitTime______v2_alt.
     % Only keep valid entries. 
@@ -437,7 +430,7 @@ for row_number = 1:numProducts
     % -----------------------------------------------------------------        
     % 2. Add POSITION ONLY UPDATE
     % -----------------------------------------------------------------
-    t_wait = T_HARDLIMIT_DIFFUSE;
+    t_wait = min([maxAllowed_t_wait_curr,T_HARDLIMIT_DIFFUSE]);
     list = [t_wait + t_absolute,currentAssemblyIDs(row),-1,2,t_wait,-1,-1];
     PQueue(end+1,:) = list;
 

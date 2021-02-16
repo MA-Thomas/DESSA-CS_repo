@@ -33,7 +33,7 @@ t_elapsed_b = event_vector(6); % time elapsed since B started diffusing
 reactionRule = event_vector(7); % which (of possibly many) reaction rules to apply within bi/uni update script
 
 row_col_logicals_index_a1 = currentAssemblyIDs==a1;
-appropriateCols(pf) = find(row_col_logicals_index_a1);
+appropriateCols(pf) = find(row_col_logicals_index_a1);t
 
 Da = Dmonomer; % to match Chew et al.
 

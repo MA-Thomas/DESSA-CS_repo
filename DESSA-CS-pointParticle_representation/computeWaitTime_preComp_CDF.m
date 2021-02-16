@@ -40,24 +40,31 @@ if IntegratedPropensity_curve(end) - IntegratedPropensity_at_var_at_t_offset < P
     return
 end
 
-inds = find(IntegratedPropensity_curve >= Pk + IntegratedPropensity_at_var_at_t_offset);
 
-%if ~isempty(inds)
-    
-    Var = variance_list(inds(1));
-    integPropValue = IntegratedPropensity_curve( inds(1) );
-    
-    % Var == 6*Da*t + 6*Db*(t + t_offset) = t*(6Da + 6Db) + t_offset*(6Db)
-    wait_time = (Var - t_offset_b*6*Db) / (6*Da + 6*Db);
-    
-    if wait_time<=0
-        wait_time
-        Var
-        t_offset_b
-        Da
-        Db
-        assert(wait_time>0)
-    end
+% FASTER VERSION
+index = sum( IntegratedPropensity_curve - IntegratedPropensity_at_var_at_t_offset < Pk ) + 1 ;
+Var = variance_list( index );
+integPropValue = IntegratedPropensity_curve( index );
+wait_time = (Var - t_offset_b*6*Db) / (6*Da + 6*Db);        
+        
+% inds = find(IntegratedPropensity_curve >= Pk + IntegratedPropensity_at_var_at_t_offset);
+% 
+% %if ~isempty(inds)
+%     
+%     Var = variance_list(inds(1));
+%     integPropValue = IntegratedPropensity_curve( inds(1) );
+%     
+%     % Var == 6*Da*t + 6*Db*(t + t_offset) = t*(6Da + 6Db) + t_offset*(6Db)
+%     wait_time = (Var - t_offset_b*6*Db) / (6*Da + 6*Db);
+%     
+%     if wait_time<=0
+%         wait_time
+%         Var
+%         t_offset_b
+%         Da
+%         Db
+%         assert(wait_time>0)
+%     end
 %{
 else
     % No reaction in allowed max diffusion time

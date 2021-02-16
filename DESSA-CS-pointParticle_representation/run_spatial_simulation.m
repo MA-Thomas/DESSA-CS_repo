@@ -1,10 +1,35 @@
 %clear all
+
+% Use Integrated pre-propensities generated from Golang code
 % Integrated_CDFs = csvread('integratedCDFs.csv');
 % distances = csvread('distance_list.csv');
 % var_list = csvread('variance_list.csv');
 % numVariances = length(var_list);
 
-numReactants = 1000;%[100,200,400,800,1600,3200,6400,12000,24000];
+
+% Use Integrated pre-propensities generated from Matlab code
+%load('SAVED_propensities__and_prePropensities_pointParticle_09-Jul-2020.mat')
+
+% lB_list = [0.01 0.02 .03 0.1 0.3 0.5];
+lB_list = [.1];%[0.04 0.05 0.06 0.07 0.08];
+mean_NumbimolRx = ones(1,length(lB_list));
+mean_NumuniRx = ones(1,length(lB_list));
+mean_NumpouRx = ones(1,length(lB_list));
+
+mean_RunTime = ones(1,length(lB_list));
+
+var_NumbimolRx = ones(1,length(lB_list));
+var_NumuniRx = ones(1,length(lB_list));
+var_NumpouRx = ones(1,length(lB_list));
+
+TMAX_list = 40;%[1 2 8 40];
+%%
+for lB = 1:length(lB_list)
+%figure
+for tM = 1:length(TMAX_list)
+
+
+numReactants = 1000*ones(1,1);%[100,200,400,800,1600,3200,6400,12000];
 
 trials = length(numReactants);%4;
 bimolecular_count_trials = zeros(1,trials);
@@ -25,18 +50,28 @@ timePoints_trials = cell(1,trials);
 stored_events_trials = cell(1,trials);
 
 
-%%
+
 for trial = 1:trials
-%%    
+
 
 
 % % ---------- HOUSEKEEPING -----------------------------------------------
 numTotal = numReactants(trial);
+benchmarkLength = 90.9;
+exceedBPercent = lB_list(lB); %0.3;
+containerLength = benchmarkLength / (exceedBPercent+1); % units [um]. V=30um^3 like Chew et al. diffusion test. 90.9 for reaction test
 
-containerLength = 90.9;%30; % units [um]. V=30um^3 like Chew et al. diffusion test. 90.9 for reaction test
+% Assemblies can be roughly this distance beyond boundary before
+% reflective boundary conditions are enforced. 0.3 seems to be optimal for
+% the point particle representation in terms of physical realism. 
+% For the finite particle representation, physical realism increases as
+% this distance approaches 0 (but the runtime increases quickly).
+exceedBoundaryDist = exceedBPercent * containerLength; 
 
-lower = -45;%-13; %-35
-upper = 45;%13;  %35 
+
+
+lower = -containerLength/2;%-13; %-35
+upper = containerLength/2;%13;  %35 
 allAssembliesXYZ = lower + (upper-lower).*rand(3,numTotal); % from box
 
 unimolecular_count = 0; % count number of times a break reaction happens.
@@ -104,17 +139,11 @@ k_ES_to_E_P = 0.1;
 k_UNI = [k_ES_to_E_S,k_ES_to_E_P];
 
 % Bimolecular rate constant (intrinsic)
-rate_constant = 5.6e14;
+rate_constant = 2.5e7;%1e14;%5.6e14;
 
 maxSimTime = 100; % Do not simulate beyond t_absolute = maxSimTime [seconds]
 
 
-% Assemblies can be roughly this distance beyond boundary before
-% reflective boundary conditions are enforced. 0.3 seems to be optimal for
-% the point particle representation in terms of physical realism. 
-% For the finite particle representation, physical realism increases as
-% this distance approaches 0 (but the runtime increases quickly).
-exceedBoundaryDist = 0.3 * containerLength; 
 
 % Reaction-Rules:
 % 1 : E + S -> ES
@@ -137,7 +166,7 @@ contact_sphere_radiusSqd = (1e-2)^2;%.2; % units [um]
 % SETS THE UPPER LIMIT ON HOW LONG AN ASSEMBLY CAN DIFFUE BEFORE ITS NEXT
 % EVENT. (Other factors like proximity to a boundary, or only considering "nearby"
 % partners can lower this upper limit).
-T_HARDLIMIT_DIFFUSE = 32; % units [s]
+T_HARDLIMIT_DIFFUSE = TMAX_list(tM);%2;%40;%32; % units [s]
 Da = Dmonomer; Db = Dmonomer; % units [um^2 / s]
 maxRxDist_T_HARD = n_sigma*sqrt(6*Dmonomer*T_HARDLIMIT_DIFFUSE); % units [um]
 % FIXED PARAMETERS
@@ -151,12 +180,12 @@ maxRxDist_T_HARD = n_sigma*sqrt(6*Dmonomer*T_HARDLIMIT_DIFFUSE); % units [um]
 %     earliestPropensityTime);
 % end
 % preCompuTime = toc(ipptime)
-%%
+%%%
 % only sample potential reactions from reactants separated by less than
 % maxRxDistance.
 maxRxDistance = maxRxDist_T_HARD; 
 
-%%
+%%%
 tic;
 % % ---------- INITIALIZATION ---------------------------------------------
 % Helper Function replaces (/contains) FOR loop.
@@ -183,7 +212,7 @@ XYZ_storage_POU1 = zeros(100000,3);
 xyz_counter = 1;
 
 mainLoop_startTime = tic;
-%%
+%%%
 % ---------------------- Start algorithm loop -----------------------------
 
 continue_algo = 1;
@@ -341,11 +370,72 @@ clearvars -except bimolecular_count_trials unimolecular_count_trials ...
     initialization_time_trials numE_trials numS_trials numES_trials numP_trials ...
     stored_events_trials reaction_runtimes d_inner1 d_inner2 rate_constant ...
     timePoints_trials numReactants T_HARD_Diffuse_Limits XYZ_storage_POU1 ...
-    Integrated_CDFs distances numVariances var_list preCompuTime
+    Integrated_CDFs distances numVariances var_list preCompuTime lB lB_list ...
+    var_NumbimolRx var_NumuniRx var_NumpouRx mean_NumbimolRx mean_NumuniRx mean_NumpouRx mean_RunTime ...
+    TMAX_list tM
+
+
 
 
 end
 
+% % For variation w.r.t. lB
+% mean_NumbimolRx(lB) = mean(bimolecular_count_trials) 
+% mean_NumuniRx(lB) = mean(unimolecular_count_trials)
+% mean_NumpouRx(lB) = mean(positionOnlyUpdate_count_trials)
+% 
+% var_NumbimolRx(lB) = var(bimolecular_count_trials) 
+% var_NumuniRx(lB) = var(unimolecular_count_trials)
+% var_NumpouRx(lB) = var(positionOnlyUpdate_count_trials)
+
+%save('statistics_for_varying_lB_.01_.02_.03_.3_.5__10SimsEach_90umTotalLength.mat','mean_NumbimolRx','mean_NumuniRx','mean_NumpouRx','var_NumbimolRx','var_NumuniRx','var_NumpouRx','lB_list','timePoints_trials')
+%save('statistics_for_varying_lB_.04_.05_.06_.07_.08__10SimsEach_90umTotalLength.mat','mean_NumbimolRx','mean_NumuniRx','mean_NumpouRx','var_NumbimolRx','var_NumuniRx','var_NumpouRx','lB_list','timePoints_trials')
+
+% % For variation w.r.t. tM
+% % % indices = timePoints_trials{1,1} > 0;
+% % % times = timePoints_trials{1,1}(indices);
+% % % E = numE_trials{1,1}(indices);
+% % % S = numS_trials{1,1}(indices);
+% % % ES = numES_trials{1,1}(indices);
+% % % P = numP_trials{1,1}(indices);
+% % % 
+% % % subplot(1,length(TMAX_list),tM)
+% % % plot(times,E)
+% % % hold on
+% % % plot(times,S)
+% % % plot(times,ES)
+% % % plot(times,P)
+% % % xlabel('Time (s)')
+% % % ylabel('Molecules')
+% % % legend('E','S','ES','P')
+% % % ylim([0 1000])
+% % % xlim([0 100])
+% % % title(['Max Allowed Diffusion Time: ',num2str(TMAX_list(tM)) ])
+% % % suptitle(['lB = ',num2str(lB_list(lB))])
+% % % hold off
+end
+end    
+save('runtime_workspace.mat')
+
+%{
+% Plotting variation w.r.t. lB (the fraction of the container length a
+molecule may diffuse beyond.
+
+figure
+errorbar(lB_list,mean_NumbimolRx,((var_NumbimolRx).^(1/2))/2,'o','MarkerSize',6,...
+'MarkerEdgeColor','red','MarkerFaceColor','red')
+%xlim([0 .6])
+xlabel('Exceed Boundary Percentage')
+ylabel('Avg No. Bimolecular Reactions')
+title('90um^3 simulation volume')
 
 
-        
+figure
+errorbar([lB_list,lB_list_4_8],[mean_NumbimolRx,mean_NumbimolRx_4_8],(([var_NumbimolRx,var_NumbimolRx_4_8]).^(1/2))/2,'o','MarkerSize',6,...
+'MarkerEdgeColor','red','MarkerFaceColor','red')
+%xlim([0 .6])
+xlabel('Exceed Boundary Percentage')
+ylabel('Avg No. Bimolecular Reactions')
+title('90um^3 simulation volume')
+
+%}

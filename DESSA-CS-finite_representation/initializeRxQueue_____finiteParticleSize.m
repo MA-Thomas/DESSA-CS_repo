@@ -6,7 +6,12 @@ function [ PQueue,initial_events,lists_cell ] = initializeRxQueue_____finitePart
     exceedBoundaryDist,minPropensityDuration,T_HARDLIMIT_DIFFUSE,...
     Integrated_propensities,distances,times_list)
 
-
+waitTimeFail_counter = 0;
+waitTimePass_counter = 0;
+numCol_counter = 0;
+valid_pair_indices_counter = 0;
+valid_pair_indices_counter2 = 0;
+valid_pair_indices_HARDLIMIT_counter = 0;
 % % -----------------------------------------------------------------
 % % Update the Priority Queue with potential new bimolecular events.
 % % -----------------------------------------------------------------
@@ -122,16 +127,8 @@ for row = 1:size(assemblyDistMatrix,1)
     valid_pair_indices = n_sigma*sqrt(6.*D.*maxAllowed_t_elapsed_list) + ...
         n_sigma*sqrt(6.*D_partners.*maxAllowed_t_elapsed_list) ...
         >= distList__currRow & maxAllowed_t_wait_list > minPropensityDuration;
-    
-    % SET HARD GLOBAL UPPER LIMIT ON TIME CURRENT ASSEMBLY CAN DIFFUSE.
-    % THIS HARD LIMIT IS INDEPENDENT OF NEAREST BOUNDARIES AND INDEPENDENT
-    % OF THE DEFINITION OF NEARBY.
-    % THIS HARD GLOBAL UPPER LIMIT IS ALSO APPLIED TO POS-ONLY-UPDATES.
-    % THIS HARD GLOBAL UPPER LIMIT ALSO APPLIES TO PROPENSITY INTEGRATION
-    % IN computeWaitTime_____v2_alt.m
-    valid_pair_indices_HARDLIMIT = maxAllowed_t_wait_list <= T_HARDLIMIT_DIFFUSE;
-    valid_pair_indices = valid_pair_indices & valid_pair_indices_HARDLIMIT;
-    
+    valid_pair_indices_counter = valid_pair_indices_counter+sum(valid_pair_indices);
+
     % Only keep valid entries. 
     maxAllowed_t_wait_list = maxAllowed_t_wait_list(valid_pair_indices);
     
@@ -142,7 +139,7 @@ for row = 1:size(assemblyDistMatrix,1)
 
     numCols = length(Cols);
     lists1 = zeros(numCols, 7);   % For bimolecular reactions    
-    
+    numCol_counter = numCol_counter+numCols;
     % ********** END NEW CODE ************
     
     % INNER LOOP.
@@ -198,10 +195,11 @@ for row = 1:size(assemblyDistMatrix,1)
         if Integrated_propensities(d_index,end) < Pk
             % No reaction in allowed max diffusion time
             wait_time = -1;
-
+            waitTimeFail_counter = waitTimeFail_counter + 1;
         else            
             [wait_time] = computeWaitTime_preComputed_IntegratedPropensity(...
-                Integrated_propensities(d_index,:), times_list, t_offset_b, Pk);   
+                Integrated_propensities(d_index,:), times_list, t_offset_b, Pk);  
+            waitTimePass_counter = waitTimePass_counter+1;
         end
         % ------------------------
         % END Compute wait_time
@@ -268,6 +266,12 @@ end
 
 [logical_inds_PQueue, ~]=ismember(PQueue,zeros(1,7),'rows');
 assert( sum(logical_inds_PQueue) == 0 )
+
+waitTimeFail_counter
+waitTimePass_counter
+waitTimePass_counter+waitTimeFail_counter
+numCol_counter
+valid_pair_indices_counter
 
 end
 

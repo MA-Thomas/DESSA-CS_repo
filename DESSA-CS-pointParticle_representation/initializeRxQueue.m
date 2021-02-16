@@ -125,18 +125,7 @@ for row = 1:size(assemblyDistMatrix,1)
     valid_pair_indices = n_sigma*sqrt(6.*D.*maxAllowed_t_elapsed_list) + ...
         n_sigma*sqrt(6.*D_partners.*maxAllowed_t_elapsed_list) ...
         >= distList__currRow & maxAllowed_t_wait_list > minPropensityDuration;
-    %disp(["distList__currRow = ",num2str(distList__currRow)])
-    %disp(["valid_pair_indices = ",num2str(valid_pair_indices)])
-    % SET HARD GLOBAL UPPER LIMIT ON TIME CURRENT ASSEMBLY CAN DIFFUSE.
-    % THIS HARD LIMIT IS INDEPENDENT OF NEAREST BOUNDARIES AND INDEPENDENT
-    % OF THE DEFINITION OF NEARBY.
-    % THIS HARD GLOBAL UPPER LIMIT IS ALSO APPLIED TO POS-ONLY-UPDATES.
-    % THIS HARD GLOBAL UPPER LIMIT ALSO APPLIES TO PROPENSITY INTEGRATION
-    % IN computeWaitTime_____v2_alt.m
-    valid_pair_indices_HARDLIMIT = maxAllowed_t_wait_list <= T_HARDLIMIT_DIFFUSE;
-    valid_pair_indices = valid_pair_indices & valid_pair_indices_HARDLIMIT;
-    %disp(["valid_pair_indices = ",num2str(valid_pair_indices)])
-    %disp(" ")
+
     % Only keep valid entries. 
     maxAllowed_t_wait_list = maxAllowed_t_wait_list(valid_pair_indices);
     

@@ -5,11 +5,13 @@
 % and save them to files before running this simulation.
 % Ensure that the fixed parameters used in Golang to
 % generate Integrated_prepensities match those defined above.
-% Integrated_propensities = csvread('integratedPropensities_FINITE.csv');
-% distances = csvread('distance_list_FINITE.csv');
-% times_list = csvread('times_list_FINITE.csv');
+% % Integrated_propensities = csvread('integratedPropensities_FINITE.csv');
+% % distances = csvread('distance_list_FINITE.csv');
+% % times_list = csvread('times_list_FINITE.csv');
 
-numReactants = 1000; %%[100,200,400,800,1000,1600,3200,6400,12000];
+
+
+numReactants = [100,200,400,800,1000,1600,3200,6400,12000];
 
 trials = length(numReactants);%4;
 bimolecular_count_trials = zeros(1,trials);
@@ -37,11 +39,19 @@ for trial = 1:trials
 
 % % ---------- HOUSEKEEPING -----------------------------------------------
 numTotal = numReactants(trial);
+benchmarkLength = 90.9;
+exceedBPercent = 0.1;
+containerLength = benchmarkLength / (exceedBPercent+1); % units [um]. V=30um^3 like Chew et al. diffusion test. 90.9 for reaction test
 
-containerLength = 90.9;%30; % units [um]. V=30um^3 like Chew et al. diffusion test. 90.9 for reaction test
+% Assemblies can be roughly this distance beyond boundary before
+% reflective boundary conditions are enforced. 0.3 seems to be optimal for
+% the point particle representation in terms of physical realism. 
+% For the finite particle representation, physical realism increases as
+% this distance approaches 0 (but the runtime increases quickly).
+exceedBoundaryDist = exceedBPercent * containerLength; 
 
-lower = -45;%-13; %-35
-upper = 45;%13;  %35 
+lower = -containerLength/2;% -45;
+upper = containerLength/2;% 45; 
 allAssembliesXYZ = lower + (upper-lower).*rand(3,numTotal); % from box
 
 unimolecular_count = 0; % count number of times a break reaction happens.
@@ -81,9 +91,9 @@ assemblies_lastUpdate_absTime = zeros(1,length(currentAssemblyIDs));
 % For a given reactant pair, at least this much time must be available for
 % propensity function integration for the algorithm to call the function
 % that samples a waiting time. 
-minPropensityDuration = 1e-7; % units [s] 
+minPropensityDuration = 1e-8; % units [s] 
 
-earliestPropensityTime = 1e-6; % when does propensity integration begin following the most recent reaction
+earliestPropensityTime = 1e-8; % when does propensity integration begin following the most recent reaction
 
 % -------------------------------------------------------------------------
 % Michaelis Menten benchmark parameters BEGIN
@@ -114,10 +124,6 @@ k_UNI = [k_ES_to_E_S,k_ES_to_E_P];
 
 maxSimTime = 100; % Do not simulate beyond t_absolute = maxSimTime [seconds]
 
-
-% Diffusion spheres can be roughly this distance beyond boundary before
-% reflective boundary conditions are enforced.
-exceedBoundaryDist = 0.1 * containerLength;
 
 
 % Reaction-Rules:
@@ -167,6 +173,10 @@ tic;
     exceedBoundaryDist,minPropensityDuration,T_HARDLIMIT_DIFFUSE,... 
     Integrated_propensities,distances,times_list);
 
+% Plot the histogram of bimolecular wait times (not incl
+% position-only-updates).
+%figure;histogram(PQueue( PQueue(:,4)==1  ,1),100)
+%title([num2str(sum(PQueue(:,4)==1)),' Reactions in Queue - Exceed Boundary distance = ',num2str(exceedBoundaryDist)])
 %--------------------------------------------------------------------------
 initialization_time = toc
 display('Initialization Complete')
@@ -329,6 +339,8 @@ positionOnlyUpdate_count
 mainLoop_time = toc(mainLoop_startTime)
 t_absolute
 
+runtime = initialization_time + mainLoop_time
+
 bimolecular_count_trials(trial) = bimolecular_count;
 unimolecular_count_trials(trial) = unimolecular_count;
 positionOnlyUpdate_count_trials(trial) = positionOnlyUpdate_count;
@@ -350,7 +362,7 @@ clearvars -except bimolecular_count_trials unimolecular_count_trials ...
     stored_events_trials reaction_runtimes d_inner1 d_inner2 rate_constant ...
     timePoints_trials numReactants T_HARD_Diffuse_Limits XYZ_storage_POU1 ...
     Integrated_CDFs distances numVariances times_list preCompuTime allAssembliesXYZ ...
-    exceedBoundaryDist Integrated_propensities
+    exceedBoundaryDist Integrated_propensities runtime
 
 
 end
